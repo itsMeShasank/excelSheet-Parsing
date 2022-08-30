@@ -1,0 +1,69 @@
+{
+  "project_info": {
+    "project_number": "289913740970",
+    "firebase_url": "https://experiment-authenticatio-1ed28-default-rtdb.firebaseio.com",
+    "project_id": "experiment-authenticatio-1ed28",
+    "storage_bucket": "experiment-authenticatio-1ed28.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:289913740970:android:bf236484e7ca8dddc8fad3",
+        "android_client_info": {
+          "package_name": "com.example.filechooser"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "289913740970-meg765df32v4g28v5ofcp3lmont47cjf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgvK4MAv_P_kXoBswYk_02ztkRjCgOYuk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "289913740970-meg765df32v4g28v5ofcp3lmont47cjf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:289913740970:android:99c3944a156da005c8fad3",
+        "android_client_info": {
+          "package_name": "com.pavan.firebaseemailauthentication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "289913740970-meg765df32v4g28v5ofcp3lmont47cjf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgvK4MAv_P_kXoBswYk_02ztkRjCgOYuk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "289913740970-meg765df32v4g28v5ofcp3lmont47cjf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
