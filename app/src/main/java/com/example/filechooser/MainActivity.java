@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     Button button,save,cancel;
-    public String year = "II - CS";
+    public String year = "III - CSE";
     String extension="";
     String[] timings = {"8:10-9:00","9:00-9:50","10:05-10:55","10:55-11:45","11:45-12:35","1:30-2:20","2:20-3:10","3:10-4:00","4:00-4:50"};
     @Override
@@ -213,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
         for(String x:new String[]{"Mon","Tue","Wed","Thu","Fri","Sat"})
             days.add(x);
         String curSec="None";
-        String year="II";
+        String year="III";
         String Rooms ="None";
         List<String>roomsList = new ArrayList<>();
         List<String>entireList = new ArrayList<>();
@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
                 int i;
                 for(i=0;i<curRow.size();i++) {
                     String value = curRow.get(i);
-                    if(value.contains("VPTF") || value.contains("VPSF")) {
+                    if(value.contains("VPTF") || value.contains("VPSF") || value.contains("Hall")) {
                         String roomdata = null;
                         roomdata = value.substring(value.indexOf("(")+1, value.indexOf(")"));
                         roomsList.add(roomdata);
@@ -251,6 +251,13 @@ public class MainActivity extends AppCompatActivity {
                         curRow.set(i, value);
                     }else if(value.contains("Open") || value.contains("Test")){
                         roomsList.add("refer section ");
+                    }else if(value.contains("Library") && value.contains("Lab")) {
+                        String roomdata=null;
+                        roomdata = value.substring(value.indexOf("(")+1, value.indexOf(")"));
+                        roomsList.add(roomdata);
+                    }else if(value.equals("Library")) {
+                        String roomdata = value;
+                        roomsList.add(roomdata);
                     }
                     else {
                         roomsList.add(Rooms);
@@ -295,22 +302,44 @@ public class MainActivity extends AppCompatActivity {
             {
                 String nameSec=curRow.get(0);
                 Rooms = curRow.get(0);
-                StringTokenizer st=new StringTokenizer(nameSec," ");
 
-                while(st.hasMoreTokens()) {
+                if(!nameSec.contains("VPTF") || !nameSec.contains("VPSF")) {
+                    System.out.println(nameSec);
+                    StringTokenizer st=new StringTokenizer(nameSec," ");
+                    st.nextToken();
+                    st.nextToken();
+                    curSec = year+" - "+st.nextToken();
+                    Rooms = nameSec.substring(nameSec.indexOf("(")+1,nameSec.length()-1);
+                }else {
+                    StringTokenizer st=new StringTokenizer(nameSec," ");
+                    while(st.hasMoreTokens()) {
+                        String in = st.nextToken();
 
-                    String in = st.nextToken();
-                    if(!in.contains("Section") && !in.contains(":") && !(in.contains("VPTF") || in.contains("VPSF"))) {
-                        curSec = year+" - "+in;
+                        if(!in.contains("Section") && !in.contains(":") && !(in.contains("VPTF") || in.contains("VPSF")) && !nameSec.contains("Hall") && !nameSec.contains("NTR")) {
+                            curSec = year+" - "+in;
+                        }
+                        if(in.contains("VPTF") || in.contains("VPSF")) {
+                            in = in.substring(1, in.length()-1);
+                            Rooms = in;
+                        }/*else if(nameSec.contains("Hall")) {
+                                in = nameSec.substring(nameSec.indexOf("(")+1, nameSec.indexOf(")"));
+                                Rooms = in;
+                                //curSec = year+" - "+in;
+                                //System.out.println("room hall : "+nameSec.substring(nameSec.indexOf("(")+1, nameSec.indexOf(")")));
+                            }else if(nameSec.contains("Library")) {
+                                in = nameSec.substring(nameSec.indexOf("(")+1, nameSec.indexOf(")"));
+                                Rooms = in;
+                                //curSec = year=" - "+in;
+                                //System.out.println("room Library : "+nameSec.substring(nameSec.indexOf("(")+1, nameSec.indexOf(")")+1));
+                            }*/
+                        else {
+                            Rooms = "None";
+                        }
                     }
-                    if(in.contains("VPTF") || in.contains("VPSF")) {
-                        in = in.substring(1, in.length()-1);
-                        Rooms = in;
-                    }
-                    else {
-                        Rooms = "None";
-                    }
+
                 }
+
+
             }
         }
         //System.out.println(entireList+"\n"+entireroomsList+"\n"+subjects);
@@ -321,13 +350,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void faculty(List<String> entireList, List<List> entireroomsList, HashMap<String, ArrayList> subjects) {
+    public void faculty(List<String> entireList, List<String> entireroomsList, HashMap<String, ArrayList> subjects) {
 
             int columncount = 0;
             for (String key : entireList) {
                 if (key.contains("II")) {
                     columncount = 0;
-                } else {student(entireList,entireroomsList.get(0),subjects);
+                } else {
+                    //student(entireList,entireroomsList,subjects);
                     columncount += 1;
                 }
             }
@@ -363,7 +393,7 @@ public class MainActivity extends AppCompatActivity {
                 room += 1;
                 periodnumber += 1;
             }
-        student(entireList,entireroomsList.get(0),subjects);
+        student(entireList,entireroomsList,subjects);
             Log.e("calling : ","student");
 
     }
@@ -380,7 +410,7 @@ public class MainActivity extends AppCompatActivity {
                 //Log.e("checking : ",st.getSub()+" == "+subject);
                 if (!st.getSub().equals(subject)) {
                         DatabaseReference databaseReference1 = FirebaseDatabase.getInstance().getReference("FacultyDetails");
-                        //databaseReference1.child(st.getFaculty()).child(st.getDay()).child(timing).removeValue();
+                        databaseReference1.child(st.getFaculty()).child(st.getDay()).child(timing).removeValue();
                         System.out.println("changed");
                     //working : System.out.println("same kaduu update aendhiii data : "+st.getPer()+" "+st.getFaculty()+" "+st.getSec()+" "+st.getSub()+" "+faculty+" "+subject+periodnumber);
                 }
@@ -391,7 +421,7 @@ public class MainActivity extends AppCompatActivity {
 
             private void save() {
                     saveFaculties saveFaculties = new saveFaculties(prsntday, faculty, section, room, subject, timing, periodnumber);
-                    //databaseReference.child(saveFaculties.getName()).child(prsntday).child(timing).setValue(saveFaculties);
+                    databaseReference.child(saveFaculties.getName()).child(prsntday).child(timing).setValue(saveFaculties);
                     System.out.println("save cheystaaa poo");
             }
 
@@ -404,7 +434,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void student(List<String> entireList, List entireroomsList, HashMap<String, ArrayList> subjects) {
+    private void student(List<String> entireList, List<String> entireroomsList, HashMap<String, ArrayList> subjects) {
         int columncount=0;
         for(String key : entireList) {
             if(key.contains("II")) {
