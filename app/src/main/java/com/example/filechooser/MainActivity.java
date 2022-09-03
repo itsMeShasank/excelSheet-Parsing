@@ -465,13 +465,6 @@ public class MainActivity extends AppCompatActivity {
                 students st = dataSnapshot.getValue(students.class);
                 if(st.getPer()!=8) {
                     if (!st.getSub().equals(subject)) {
-                        /*if(subject.contains("Library")) {
-                            DatabaseReference studentsaving = FirebaseDatabase.getInstance().getReference("StudentDetails");
-                            students newstudent = new students(periodnumber,faculty,section,prsntday,subject,room,timing);
-                            studentsaving.child(section).child(prsntday).child(timing).setValue(newstudent);
-                            System.out.println("faculty ki eyna theruvathae student changed");
-                        }
-                        System.out.println("different");*/
                         DatabaseReference databaseReference1 = FirebaseDatabase.getInstance().getReference("FacultyDetails");
                         String name = st.getFaculty();
                         String result = name.replaceAll("[-+.^:,]","");
