@@ -29,6 +29,7 @@
         import com.google.firebase.database.DatabaseError;
         import com.google.firebase.database.DatabaseReference;
         import com.google.firebase.database.FirebaseDatabase;
+        import com.google.firebase.database.GenericTypeIndicator;
         import com.google.firebase.database.ValueEventListener;
 
         import java.io.File;
@@ -71,14 +72,14 @@ public class MainActivity extends AppCompatActivity {
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //askPermissionAndBrowseFile();
+                startActivity(new Intent(getApplicationContext(),staffentry.class));
             }
         });
         cancel = findViewById(R.id.cancel);
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                finish();
+                startActivity(new Intent(getApplicationContext(),AdminDesign.class));
             }
         });
         button = findViewById(R.id.browse);
@@ -211,6 +212,8 @@ public class MainActivity extends AppCompatActivity {
         }
         return data;
     }
+    //HashMap<String,ArrayList> subjects = new HashMap<>();
+    HashMap<String,ArrayList<String>> namesmap = new HashMap<>();
 
     public  void getdata() throws BiffException, IOException {
         Map<Integer,List<String>>sheet=readJExcel(Environment.getExternalStorageDirectory().toString()+"/TimeTable/data"+extension, year);
@@ -220,6 +223,7 @@ public class MainActivity extends AppCompatActivity {
         String curSec="None";
         String year="III";
         String Rooms ="None";
+        namesmap.clear();
         List<String>roomsList = new ArrayList<>();
         List<String>entireList = new ArrayList<>();
 
@@ -292,6 +296,7 @@ public class MainActivity extends AppCompatActivity {
                         curRow.set(i, value);
                     }else if(value.contains("Open") || value.contains("Test") || value.contains("IDP")){
                         roomsList.add("refer section ");
+
                     }else if(value.contains("Library") && value.contains("Lab")) {
                         String roomdata=null;
                         roomdata = value.substring(value.indexOf("(")+1, value.indexOf(")"));
@@ -343,9 +348,7 @@ public class MainActivity extends AppCompatActivity {
                                 list.add(facultyName);
                             }
                             map.put(key,list);
-
-
-                            /*for(String name:list){
+                            for(String name:list){
                                 if(namesmap.containsKey(name))
                                     namesmap.get(name).add(key);
                                 else{
@@ -353,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
                                     ll.add(key);
                                     namesmap.put(name,ll);
                                 }
-                            }*/
+                            }
                         }
                     }
                 }
@@ -388,7 +391,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-            if(curRow.get(0).contains("AI&ML") || curRow.get(0).contains("CS") || curRow.get(0).contains("CSBS"))
+            if((curRow.get(0).contains("AI&ML") || curRow.get(0).contains("CS") || curRow.get(0).contains("CSBS") )&& curRow.get(0).contains("Section"))
             {
                 //II AI&ML Section: A
                 //II AI&ML Section: A (VPTF -07)
@@ -421,7 +424,7 @@ public class MainActivity extends AppCompatActivity {
         }
         //System.out.println(entireList+"\n"+entireroomsList+"\n"+subjects);
 
-
+        globalApplication.namesmap = namesmap;
         faculty(entireList, entireroomsList.get(0), subjects);
         //student(entireList,entireroomsList.get(0),subjects);
 
@@ -466,18 +469,19 @@ public class MainActivity extends AppCompatActivity {
                 //System.out.println(periodnumber+", "+timings[periodnumber-1]+", "+section+", "+Prsntday+", "+entireList.get(sub)+" "+entireroomsList.get(room)+", "+faculty);
                 //
                 int t = 0;
+
                 while (t < faculty.size()) {
                     if(entireList.get(sub).contains("SCIRP")) {
                         String copy = entireList.get(sub);
                         String facultyNameIDP = entireList.get(sub).substring(entireList.get(sub).indexOf(")")+1,entireList.get(sub).length());
                         String subject = copy.substring(0,copy.indexOf("("));
                         if(periodnumber < 8) {
-                            System.out.println(periodnumber+", "+timings[periodnumber-1]+", "+section+", "+Prsntday+", "+subject+", "+entireroomsList.get(room)+", "+facultyNameIDP);
+                            //System.out.println(periodnumber+", "+timings[periodnumber-1]+", "+section+", "+Prsntday+", "+subject+", "+entireroomsList.get(room)+", "+facultyNameIDP);
                             facultyFirebase1(timings[periodnumber - 1], periodnumber, section, Prsntday, subject, entireroomsList.get(room).toString(), facultyNameIDP);
                         }
                     }else {
                         if(periodnumber <8){
-                            System.out.println(periodnumber+", "+timings[periodnumber-1]+", "+section+", "+Prsntday+", "+entireList.get(sub)+", "+entireroomsList.get(room)+", "+faculty.get(t));
+                            //System.out.println(periodnumber+", "+timings[periodnumber-1]+", "+section+", "+Prsntday+", "+entireList.get(sub)+", "+entireroomsList.get(room)+", "+faculty.get(t));
                             facultyFirebase1(timings[periodnumber - 1], periodnumber, section, Prsntday, entireList.get(sub), entireroomsList.get(room).toString(), faculty.get(t).toString());
                         }
                     }
@@ -493,58 +497,56 @@ public class MainActivity extends AppCompatActivity {
             room += 1;
             periodnumber += 1;
         }
-        //student(entireList,entireroomsList,subjects);
-
     }
 
     public void facultyFirebase1(String timing, int periodnumber, String section, String prsntday, String subject, String room, String faculty) {
         int t=0;
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("FacultyDetails");
         DatabaseReference data = FirebaseDatabase.getInstance().getReference("StudentDetails");
-
+        HashMap<String,ArrayList>faculties = new HashMap<String,ArrayList>();
         data.child(section).child(prsntday).child(timing).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 students st = dataSnapshot.getValue(students.class);
-                if(st.getPer()<8) {
-                    if(st.getSub().contains("Lab") && !subject.contains("Lab")) {
-                        //Log.e("Labs :",st.getPer()+", "+st.getDay()+", "+st.getSub()+", "+st.getSec()+", "+st.getRoom()+", "+st.getFaculty());
-                        String key = section+","+st.getSub();
-                        ArrayList<String> faculties = subjects.get(key.trim());
-                        System.out.println(key+"   ::  "+faculties);
-                        int NoOfFaculites=0;
-                        while(NoOfFaculites < faculties.size()) {
+                Log.e("vachaa","lopalaki");
+                if(st.getSub().contains("Lab") && !subject.contains("Lab")) {
+                    //working
+                    //Log.e("Labs :",st.getPer()+", "+st.getDay()+", "+st.getSub()+", "+st.getSec()+", "+st.getRoom()+", "+st.getFaculty());
+                    String key = section+","+st.getSub();
+                    ArrayList<String> faculties = subjects.get(key.trim());
+                    System.out.println(key+"   ::  "+faculties);
+                    int NoOfFaculites=0;
+                    while(NoOfFaculites < faculties.size()) {
 
-                            DatabaseReference daa = FirebaseDatabase.getInstance().getReference("FacultyDetails");
-                            daa.child(faculties.get(NoOfFaculites)).child(prsntday).child(year).child(st.getTime()).removeValue();
-                            NoOfFaculites+=1;
-                        }
+                        DatabaseReference daa = FirebaseDatabase.getInstance().getReference("FacultyDetails");
+                        daa.child(faculties.get(NoOfFaculites)).child(prsntday).child(year).child(st.getTime()).removeValue();
+                        NoOfFaculites+=1;
+
                     }
-                    if (!st.getSub().equals(subject)) {
-                        DatabaseReference databaseReference1 = FirebaseDatabase.getInstance().getReference("FacultyDetails");
-                        String name = st.getFaculty();
-                        String result = name.replaceAll("[-+.^:,]", "");
-                        databaseReference1.child(result).child(st.getDay()).child(year).child(timing).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
+                }
+                if (!st.getSub().equals(subject)) {
+                    DatabaseReference databaseReference1 = FirebaseDatabase.getInstance().getReference("FacultyDetails");
+                    String name = st.getFaculty();
+                    String result = name.replaceAll("[-+.^:,]", "");
+                    databaseReference1.child(result).child(st.getDay()).child(year).child(timing).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
 
-                                if (task.isSuccessful()) {
+                            if (task.isSuccessful()) {
                                     DatabaseReference studentsaving = FirebaseDatabase.getInstance().getReference("StudentDetails");
                                     students newstudent = new students(periodnumber, faculty, section, prsntday, subject, room, timing);
                                     studentsaving.child(section).child(prsntday).child(timing).setValue(newstudent);
-                                    System.out.println("faculty ki eyna theruvathae student changed");
-                                }
+
                             }
-                        });
+                        }
+                    });
 
-                        //working : System.out.println("same kaduu update aendhiii data : "+st.getPer()+" "+st.getFaculty()+" "+st.getSec()+" "+st.getSub()+" "+faculty+" "+subject+periodnumber);
-                    }
-                    save();
+                    //working : System.out.println("same kaduu update aendhiii data : "+st.getPer()+" "+st.getFaculty()+" "+st.getSec()+" "+st.getSub()+" "+faculty+" "+subject+periodnumber);
                 }
-
+                save();
             }
 
-            private void save() {
+            public void save() {
                 if(periodnumber<8) {
                     saveFaculties saveFaculties = new saveFaculties(prsntday, faculty, section, room, subject, timing, periodnumber);
                     String name = saveFaculties.getName();
@@ -553,10 +555,23 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if(task.isSuccessful()) {
-                                DatabaseReference studentsaving = FirebaseDatabase.getInstance().getReference("StudentDetails");
-                                students newstudent = new students(periodnumber,faculty,section,prsntday,subject,room,timing);
-                                studentsaving.child(section).child(prsntday).child(timing).setValue(newstudent);
-                                //System.out.println("faculty ki eyna theruvathae student changed");
+                                String key = section+","+subject;
+                                ArrayList<String> faculties = subjects.get(key.trim());
+                                if(faculties.size()>=2) {
+                                    System.out.println(periodnumber+", "+faculties.get(0)+", "+section+", "+prsntday+", "+subject+", "+room+", "+timing);
+                                    DatabaseReference studentsaving = FirebaseDatabase.getInstance().getReference("StudentDetails");
+                                    students newstudent = new students(periodnumber,faculties.get(0),section,prsntday,subject,room,timing);
+                                    studentsaving.child(section).child(prsntday).child(timing).setValue(newstudent);
+                                    Log.e("lab data : ","saved");
+                                }
+                                else {
+                                    System.out.println(periodnumber+", "+faculty+", "+section+", "+prsntday+", "+subject+", "+room+", "+timing);
+                                    DatabaseReference studentsaving = FirebaseDatabase.getInstance().getReference("StudentDetails");
+                                    students newstudent = new students(periodnumber,faculty,section,prsntday,subject,room,timing);
+                                    studentsaving.child(section).child(prsntday).child(timing).setValue(newstudent);
+                                    Log.e("non lab data : ","saved");
+                                }
+
                             }
                         }
                     });
@@ -631,29 +646,15 @@ public class MainActivity extends AppCompatActivity {
         DatabaseReference databaseReference = firebaseDatabase.getReference("StudentDetails");
         students st = new students(period,faculty,section,prsntday,subject,room,time);
 
-        if(!st.getSub().equals("***")) {
+        if(!st.getSub().equals("***") && !st.getSub().contains("Sat") && st.getPer()<8) {
             System.out.println("students : "+time+", "+st.getPer()+", "+st.getDay()+", "+st.getSec()+", "+st.getSub()+", "+st.getRoom()+", "+st.getFaculty());
-            databaseReference.child(section).child(prsntday).child(time).setValue(st);
+            databaseReference.child(section).child(prsntday).child(time).setValue(st).addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    Log.e("yupee","done");
+                }
+            });
         }
-    }
-
-
-    public void facultyFirebasefornull(String timing, int periodnumber, String section, String prsntday, String subject, String room, String faculty) {
-
-        DatabaseReference data = FirebaseDatabase.getInstance().getReference("StudentDetails");
-        DatabaseReference data1 = FirebaseDatabase.getInstance().getReference("FacultyDetails");
-        students st = new students(periodnumber,faculty,section,prsntday,subject,room,timing);
-        data.child(section).child(prsntday).child(timing).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Log.e("json : ",dataSnapshot.toString());
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
     }
 
 
@@ -663,7 +664,79 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 }
+/*
+if(st.getPer()<8) {
 
+                    if(st.getSub().contains("Lab")) {
+                        String key = section+","+st.getSub();
+                        ArrayList<String> faculties = subjects.get(key.trim());
+
+                        System.out.println(key+"   ::  "+faculties);
+                        int NoOfFaculites=0;
+                        while(NoOfFaculites < faculties.size()) {
+
+                            DatabaseReference daa = FirebaseDatabase.getInstance().getReference("FacultyDetails");
+                            daa.child(faculties.get(NoOfFaculites)).child(prsntday).child(year).child(st.getTime()).addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                                    String name = dataSnapshot.child("name").getValue(String.class);
+                                    int period = dataSnapshot.child("period").getValue(Integer.class);
+                                    String Section = dataSnapshot.child("sectionId").getValue(String.class);
+                                    String Subject = dataSnapshot.child("shortVal").getValue(String.class);
+
+                                    Log.e("fcaulties from firebase",period+", "+Section+", "+Subject+", "+name);
+                                    Log.e("latest excel ",periodnumber+", "+section+", "+subject+", "+faculty);
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                }
+                            });
+                            NoOfFaculites+=1;
+
+                        }
+                    }
+                }
+                //lab pending issueee
+
+
+                    if(st.getSub().contains("Lab") && !subject.contains("Lab")) {
+                        //working
+                        //Log.e("Labs :",st.getPer()+", "+st.getDay()+", "+st.getSub()+", "+st.getSec()+", "+st.getRoom()+", "+st.getFaculty());
+                        String key = section+","+st.getSub();
+                        ArrayList<String> faculties = subjects.get(key.trim());
+                        System.out.println(key+"   ::  "+faculties);
+                        int NoOfFaculites=0;
+                        while(NoOfFaculites < faculties.size()) {
+
+                            DatabaseReference daa = FirebaseDatabase.getInstance().getReference("FacultyDetails");
+                            daa.child(faculties.get(NoOfFaculites)).child(prsntday).child(year).child(st.getTime()).removeValue();
+                            NoOfFaculites+=1;
+
+                        }
+                    }
+                    if (!st.getSub().equals(subject)) {
+                        DatabaseReference databaseReference1 = FirebaseDatabase.getInstance().getReference("FacultyDetails");
+                        String name = st.getFaculty();
+                        String result = name.replaceAll("[-+.^:,]", "");
+                        databaseReference1.child(result).child(st.getDay()).child(year).child(timing).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+
+                                if (task.isSuccessful()) {
+                                    DatabaseReference studentsaving = FirebaseDatabase.getInstance().getReference("StudentDetails");
+                                    students newstudent = new students(periodnumber, faculty, section, prsntday, subject, room, timing);
+                                    studentsaving.child(section).child(prsntday).child(timing).setValue(newstudent);
+                                    System.out.println("faculty ki eyna theruvathae student changed");
+                                }
+                            }
+                        });
+
+                        //working : System.out.println("same kaduu update aendhiii data : "+st.getPer()+" "+st.getFaculty()+" "+st.getSec()+" "+st.getSub()+" "+faculty+" "+subject+periodnumber);
+                    }
+ */
 
 /*
 Faculties faculties;
